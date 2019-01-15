@@ -59,6 +59,7 @@
 #define PCIR_VENDOR           0x00U
 #define PCIR_DEVICE           0x02U
 #define PCIR_COMMAND          0x04U
+#define PCIM_CMD_MEMORY       0x02U
 #define PCIM_CMD_INTxDIS      0x400U
 #define PCIR_STATUS           0x06U
 #define PCIM_STATUS_CAPPRESENT    0x0010U

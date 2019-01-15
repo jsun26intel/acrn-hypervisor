@@ -49,18 +49,96 @@ static struct pci_vdev *partition_mode_find_vdev(struct acrn_vpci *vpci, union p
 	return NULL;
 }
 
+/* get pdev bar address and load bar size and type to vdev */
+void partition_mode_bar_init(struct pci_vdev *vdev)
+{
+	uint64_t base, size;
+	uint32_t base_hi, size_hi, bar_offset;
+	uint16_t orig_cmd;
+	uint8_t	type, idx;
+
+	orig_cmd = pci_pdev_read_cfg(vdev->pdev.bdf, PCIR_COMMAND, 2U);
+	if ((orig_cmd & PCIM_CMD_MEMORY) != 0U ){
+		/* Disable memory decode before sizing BAR */
+		pci_pdev_write_cfg(vdev->pdev.bdf, PCIR_COMMAND, 2U, orig_cmd & ~PCIM_CMD_MEMORY);
+	}
+
+	for (idx = 0; idx < PCI_BAR_COUNT; idx++) {
+		bar_offset = pci_bar_offset(idx);
+		base = pci_pdev_read_cfg(vdev->pdev.bdf, bar_offset, 4U);
+		if ((base & PCIM_BAR_SPACE) == PCIM_BAR_IO_SPACE) {
+			continue;
+		}
+		type = (uint8_t)(base & PCIM_BAR_MEM_TYPE);
+		base &= PCIM_BAR_MEM_BASE;
+		if (type == PCIM_BAR_MEM_32) {
+			pci_pdev_write_cfg(vdev->pdev.bdf, bar_offset, 4U, (uint32_t)~0U);
+			size = pci_pdev_read_cfg(vdev->pdev.bdf, bar_offset, 4U);
+			pci_pdev_write_cfg(vdev->pdev.bdf, bar_offset, 4U, (uint32_t)base);
+			size &= PCIM_BAR_MEM_BASE;
+			size &= (~size + 1U);
+			if (size == (uint32_t)~0U) {
+				size = 0U;
+			}
+			if (size == 0U) {
+				continue;
+			}
+		} else if (type == PCIM_BAR_MEM_64) {
+			base_hi = pci_pdev_read_cfg(vdev->pdev.bdf, (bar_offset + 4U), 4U);
+			base |= ((uint64_t)base_hi << 32U);
+			pci_pdev_write_cfg(vdev->pdev.bdf, bar_offset, 4U, (uint32_t)~0U);
+			size = pci_pdev_read_cfg(vdev->pdev.bdf, bar_offset, 4U);
+			pci_pdev_write_cfg(vdev->pdev.bdf, (bar_offset + 4U), 4U, (uint32_t)~0U);
+			size_hi = pci_pdev_read_cfg(vdev->pdev.bdf, (bar_offset + 4U), 4U);
+			pci_pdev_write_cfg(vdev->pdev.bdf, bar_offset, 4U, (uint32_t)(base & PCIM_BAR_MEM_BASE));
+			pci_pdev_write_cfg(vdev->pdev.bdf, (bar_offset + 4U), 4U, base_hi);
+
+			size |= ((uint64_t)size_hi << 32U);
+			size &= (((uint64_t)~0U << 32U) | PCIM_BAR_MEM_BASE);
+			size = (~size + 1U);
+			if (size > 0xffffffffU) {
+				pr_err("PCI BAR size is too big to support.");
+				size = 0U;
+			}
+			if (size == 0U) {
+				idx++;
+				continue;
+			}
+		}
+		vdev->pdev.bar[idx].base = base;
+		vdev->pdev.bar[idx].size = size;
+		vdev->pdev.bar[idx].type = (type == PCIM_BAR_MEM_64) ? PCIBAR_MEM64 : PCIBAR_MEM32;
+		vdev->bar[idx].size = (size < 0x1000U) ? 0x1000U : size;
+		vdev->bar[idx].type = PCIBAR_MEM32;
+		pr_dbg("%x:%x.%x bar[%d].pbase = %llx, psize = %llx, vsize = %llx, ptype = %d \n",
+			vdev->pdev.bdf.bits.b, vdev->pdev.bdf.bits.d, vdev->pdev.bdf.bits.f,
+			idx, vdev->pdev.bar[idx].base, vdev->pdev.bar[idx].size,
+			vdev->bar[idx].size, vdev->pdev.bar[idx].type);
+
+		if (type == PCIM_BAR_MEM_64) {
+			idx++;
+		}
+	}
+}
+
 static int32_t partition_mode_vpci_init(const struct acrn_vm *vm)
 {
 	struct vpci_vdev_array *vdev_array;
 	const struct acrn_vpci *vpci = &vm->vpci;
 	struct pci_vdev *vdev;
 	int32_t i;
+	uint8_t hdr_type;
 
 	vdev_array = vm->vm_config->vpci_vdev_array;
 
 	for (i = 0; i < vdev_array->num_pci_vdev; i++) {
 		vdev = &vdev_array->vpci_vdev_list[i];
 		vdev->vpci = vpci;
+
+		hdr_type = (uint8_t)pci_pdev_read_cfg(vdev->pdev.bdf, PCIR_HDRTYPE, 1U);
+		if ((hdr_type & PCIM_HDRTYPE) == PCIM_HDRTYPE_NORMAL) {
+			partition_mode_bar_init(vdev);
+		}
 
 		if ((vdev->ops != NULL) && (vdev->ops->init != NULL)) {
 			if (vdev->ops->init(vdev) != 0) {
