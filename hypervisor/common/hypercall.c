@@ -119,6 +119,9 @@ int32_t hcall_create_vm(struct acrn_vm *vm, uint64_t param)
 		(void)memset(&vm_config, 0U, sizeof(vm_config));
 		vm_config.sworld_supported = ((cv.vm_flag & (SECURE_WORLD_ENABLED)) != 0U);
 		(void)memcpy_s(&vm_config.GUID[0], 16U, &cv.GUID[0], 16U);
+		/* TODO: set by DM */
+		vm_config.type = NORMAL_VM;
+		vm_config.guest_flags = cv.vm_flag;
 
 		ret = create_vm(&vm_config, &target_vm);
 		if (ret != 0) {
@@ -139,6 +142,15 @@ int32_t hcall_create_vm(struct acrn_vm *vm, uint64_t param)
 	        ret = -1;
 	}
 
+	if (ret == 0) {
+		/* store UOS vm_config to global vm_configs[vm_id] */
+		struct acrn_vm_config *target_vm_config = vm_configs + target_vm->vm_id;
+
+		(void)memcpy_s((void *)target_vm_config, sizeof(struct acrn_vm_config),
+				(void *)&vm_config, sizeof(struct acrn_vm_config));
+		/* override target_vm->vm_config which initiated in create_vm() */
+		target_vm->vm_config = vm_configs + target_vm->vm_id;
+	}
 	return ret;
 }
 
