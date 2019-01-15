@@ -313,16 +313,11 @@ int32_t prepare_vm(uint16_t pcpu_id);
 
 extern struct acrn_vm_config vm_configs[];
 
-#ifdef CONFIG_PARTITION_MODE
-const struct vm_config_array *get_vm_config_base(void);
-#endif
-
 struct acrn_vm *get_vm_from_vmid(uint16_t vm_id);
 
 #ifdef CONFIG_PARTITION_MODE
 struct vm_config_array {
-	int32_t                     num_vm_config;
-	struct acrn_vm_config   vm_config_array[];
+	struct acrn_vm_config   vm_config_array[CONFIG_MAX_VM_NUM];
 };
 
 struct pcpu_vm_config_mapping {
