@@ -47,7 +47,8 @@
 #endif
 
 /* Generic VM flags from guest OS */
-#define SECURE_WORLD_ENABLED    (1UL << 0U)  /* Whether secure world is enabled */
+#define SECURE_WORLD_ENABLED    (1UL << 0U)	/* Whether secure world is enabled */
+#define LAPIC_PASSTHROUGH	(1UL << 1U)  	/* Whether LAPIC is passed through */
 
 /**
  * @brief Hypercall
