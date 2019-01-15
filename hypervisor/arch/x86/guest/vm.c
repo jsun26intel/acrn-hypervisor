@@ -80,10 +80,14 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 		vm = &vm_array[vm_id];
 		(void)memset((void *)vm, 0U, sizeof(struct acrn_vm));
 		vm->vm_id = vm_id;
-#ifdef CONFIG_PARTITION_MODE
-		/* Map Virtual Machine to its VM Description */
+		/* for SOS_VM and PRE_LAUNCHED_VM,
+		 * the vm_config point to vm_configs array, we should save to
+		 * vm->vm_config now to make sure following code work;
+		 * for NORMAL_VM,
+		 * the vm_config point to the config from hypercall, we need to
+		 * override vm->vm_config after create_vm() returned;
+		 */
 		vm->vm_config = vm_config;
-#endif
 		vm->hw.created_vcpus = 0U;
 		vm->emul_mmio_regions = 0U;
 		vm->snoopy_mem = true;
@@ -397,21 +401,21 @@ int32_t prepare_vm(uint16_t pcpu_id)
 #else
 
 /* Create vm/vcpu for vm0 */
-static int32_t prepare_vm0(void)
+int32_t prepare_vm(uint16_t pcpu_id)
 {
 	int32_t err;
 	uint16_t i;
 	struct acrn_vm *vm = NULL;
-	struct acrn_vm_config vm0_config;
+	struct acrn_vm_config *vm_config;
 
-	(void)memset((void *)&vm0_config, 0U, sizeof(vm0_config));
-	vm0_config.vm_hw_num_cores = get_pcpu_nums();
+	(void)pcpu_id;
+	vm_config = &vm_configs[0];
 
-	err = create_vm(&vm0_config, &vm);
+	err = create_vm(vm_config, &vm);
 
 	if (err == 0) {
 		/* Allocate all cpus to vm0 at the beginning */
-		for (i = 0U; i < vm0_config.vm_hw_num_cores; i++) {
+		for (i = 0U; i < get_pcpu_nums(); i++) {
 			err = prepare_vcpu(vm, i);
 			if (err != 0) {
 				break;
@@ -424,27 +428,13 @@ static int32_t prepare_vm0(void)
 				vm_sw_loader = general_sw_loader;
 			}
 
-			if (is_vm0(vm)) {
-				(void)vm_sw_loader(vm);
-			}
+			(void)vm_sw_loader(vm);
 
 			/* start vm0 BSP automatically */
 			start_vm(vm);
 
 			pr_acrnlog("Start VM0");
 		}
-	}
-
-	return err;
-}
-
-int32_t prepare_vm(uint16_t pcpu_id)
-{
-	int32_t err = 0;
-
-	/* prepare vm0 if pcpu_id is BOOT_CPU_ID */
-	if (pcpu_id == BOOT_CPU_ID) {
-		err  = prepare_vm0();
 	}
 
 	return err;
