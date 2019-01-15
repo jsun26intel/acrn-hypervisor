@@ -117,7 +117,6 @@ int32_t hcall_create_vm(struct acrn_vm *vm, uint64_t param)
 	(void)memset((void *)&cv, 0U, sizeof(cv));
 	if (copy_from_gpa(vm, &cv, param, sizeof(cv)) == 0) {
 		(void)memset(&vm_config, 0U, sizeof(vm_config));
-		vm_config.sworld_supported = ((cv.vm_flag & (SECURE_WORLD_ENABLED)) != 0U);
 		(void)memcpy_s(&vm_config.GUID[0], 16U, &cv.GUID[0], 16U);
 		/* TODO: set by DM */
 		vm_config.type = NORMAL_VM;

@@ -119,7 +119,9 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 
 		} else {
 			/* populate UOS vm fields according to vm_config */
-			vm->sworld_control.flag.supported = vm_config->sworld_supported;
+			if ((vm_config->guest_flags & SECURE_WORLD_ENABLED) != 0U) {
+				vm->sworld_control.flag.supported = 1U;
+			}
 			if (vm->sworld_control.flag.supported != 0UL) {
 				struct memory_ops *ept_mem_ops = &vm->arch_vm.ept_mem_ops;
 
