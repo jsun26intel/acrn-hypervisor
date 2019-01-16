@@ -157,7 +157,6 @@ struct vm_config_array vm_config_partition = {
 				.pcpu_bitmap = (PLUG_CPU(0) | PLUG_CPU(2)),
 				.memory.start_hpa = 0x100000000UL,
 				.memory.size = 0x20000000UL, /* uses contiguous memory from host */
-				.vm_vuart = true,
 				.os_config.bootargs = "root=/dev/sda3 rw rootwait noxsave maxcpus=2 nohpet console=hvc0 \
 						console=ttyS2 no_timer_check ignore_loglevel log_buf_len=16M \
 						consoleblank=0 tsc=reliable xapic_phys",
@@ -170,7 +169,6 @@ struct vm_config_array vm_config_partition = {
 				.guest_flags = LAPIC_PASSTHROUGH,
 				.memory.start_hpa = 0x120000000UL,
 				.memory.size = 0x20000000UL, /* uses contiguous memory from host */
-				.vm_vuart = true,
 				.os_config.bootargs = "root=/dev/sda3 rw rootwait noxsave maxcpus=2 nohpet console=hvc0 \
 						console=ttyS2 no_timer_check ignore_loglevel log_buf_len=16M \
 						consoleblank=0 tsc=reliable xapic_phys",

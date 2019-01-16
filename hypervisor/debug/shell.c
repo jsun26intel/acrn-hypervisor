@@ -796,9 +796,8 @@ static int32_t shell_to_sos_console(__unused int32_t argc, __unused char **argv)
 
 	struct acrn_vm *vm;
 	struct acrn_vuart *vu;
-#ifdef CONFIG_PARTITION_MODE
-	struct acrn_vm_config *vm_config;
 
+#ifdef CONFIG_PARTITION_MODE
 	if (argc == 2U) {
 		guest_no = strtol_deci(argv[1]);
 	}
@@ -810,15 +809,6 @@ static int32_t shell_to_sos_console(__unused int32_t argc, __unused char **argv)
 	if (vm == NULL) {
 		return -EINVAL;
 	}
-
-#ifdef CONFIG_PARTITION_MODE
-	vm_config = vm->vm_config;
-	if (vm_config != NULL && vm_config->vm_vuart == false) {
-		snprintf(temp_str, TEMP_STR_SIZE, "No vUART configured for vm%d\n", guest_no);
-		shell_puts(temp_str);
-		return 0;
-	}
-#endif
 
 	vu = vm_vuart(vm);
 	/* UART is now owned by the SOS.

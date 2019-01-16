@@ -217,7 +217,6 @@ struct acrn_vm_config {
 	struct acrn_vm_os_config os_config;		/* OS information the VM */
 
 #ifdef CONFIG_PARTITION_MODE
-	bool			vm_vuart;
 	struct vpci_vdev_array  *vpci_vdev_array;
 #endif
 
