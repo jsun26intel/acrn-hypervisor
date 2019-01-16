@@ -74,12 +74,7 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 	uint16_t vm_id;
 	bool need_cleanup = false;
 
-#ifdef CONFIG_PARTITION_MODE
-	vm_id = vm_config->vm_id;
-	bitmap_set_lock(vm_id, &vmid_bitmap);
-#else
 	vm_id = alloc_vm_id();
-#endif
 
 	if (vm_id < CONFIG_MAX_VM_NUM) {
 		/* Allocate memory for virtual machine */
@@ -367,6 +362,34 @@ void resume_vm_from_s3(struct acrn_vm *vm, uint32_t wakeup_vec)
 }
 
 #ifdef CONFIG_PARTITION_MODE
+/* Check current pcpu_id is assigned to which vm config in vm_config array */
+struct acrn_vm_config *find_pre_launched_vm_config(uint16_t pcpu_id)
+{
+	uint8_t i;
+	struct acrn_vm_config *vm_config = NULL;
+
+	for (i = 0U; i < CONFIG_MAX_VM_NUM; i++) {
+		vm_config = vm_config_partition.vm_config_array + i;
+		if ((vm_config->type == PRE_LAUNCHED_VM) && bitmap_test(pcpu_id, &vm_config->pcpu_bitmap)) {
+			break;
+		}
+		vm_config = NULL;
+	}
+	return vm_config;
+}
+
+uint8_t get_vm_pcpu_nums(struct acrn_vm_config *vm_config)
+{
+	uint8_t i, cores = 0;
+
+	for (i = 0U; i < get_pcpu_nums(); i++) {
+		if (bitmap_test(i, &vm_config->pcpu_bitmap)) {
+			cores++;
+		}
+	}
+	return cores;
+}
+
 /* Create vm/vcpu for vm */
 int32_t prepare_vm(uint16_t pcpu_id)
 {
@@ -375,9 +398,10 @@ int32_t prepare_vm(uint16_t pcpu_id)
 	struct acrn_vm *vm = NULL;
 	struct acrn_vm_config *vm_config = NULL;
 	bool is_vm_bsp;
+	uint64_t pcpu_bitmap;
 
-	vm_config = pcpu_vm_config_map[pcpu_id].vm_config_ptr;
-	is_vm_bsp = pcpu_vm_config_map[pcpu_id].is_bsp;
+	vm_config = find_pre_launched_vm_config(pcpu_id);
+	is_vm_bsp = (vm_config != NULL) && (get_vm_bsp_pcpu_id(vm_config) == pcpu_id);
 
 	if (is_vm_bsp) {
 		ret = create_vm(vm_config, &vm);
@@ -385,11 +409,12 @@ int32_t prepare_vm(uint16_t pcpu_id)
 
 		mptable_build(vm);
 
-		prepare_vcpu(vm, vm_config->vm_pcpu_ids[0]);
-
-		/* Prepare the AP for vm */
-		for (i = 1U; i < vm_config->vm_hw_num_cores; i++)
-			prepare_vcpu(vm, vm_config->vm_pcpu_ids[i]);
+		pcpu_bitmap = vm_config->pcpu_bitmap;
+		for (i = 0U; i < get_pcpu_nums(); i++) {
+			if (bitmap_test(i, &pcpu_bitmap)) {
+				prepare_vcpu(vm, i);
+			}
+		}
 
 		if (vm_sw_loader == NULL) {
 			vm_sw_loader = general_sw_loader;
@@ -400,7 +425,7 @@ int32_t prepare_vm(uint16_t pcpu_id)
 		/* start vm BSP automatically */
 		start_vm(vm);
 
-		pr_acrnlog("Start VM%x", vm_config->vm_id);
+		pr_acrnlog("Start VM%x", vm->vm_id);
 	}
 
 	return ret;

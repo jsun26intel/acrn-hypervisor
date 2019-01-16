@@ -187,10 +187,8 @@ struct vm_config_array vm_config_partition = {
 		/* Virtual Machine descriptions */
 		.vm_config_array = {
 			{
-				/* Internal variable, MUSTBE init to -1 */
-				.vm_hw_num_cores = VM1_NUM_CPUS,
-				.vm_pcpu_ids = &VM1_CPUS[0],
-				.vm_id = 1U,
+				.type = PRE_LAUNCHED_VM,
+				.pcpu_bitmap = (PLUG_CPU(0) | PLUG_CPU(2) | PLUG_CPU(4) | PLUG_CPU(6)),
 				.start_hpa = 0x100000000UL,
 				.mem_size = 0x80000000UL, /* uses contiguous memory from host */
 				.vm_vuart = true,
@@ -202,10 +200,8 @@ struct vm_config_array vm_config_partition = {
 			},
 
 			{
-				/* Internal variable, MUSTBE init to -1 */
-				.vm_hw_num_cores = VM2_NUM_CPUS,
-				.vm_pcpu_ids = &VM2_CPUS[0],
-				.vm_id = 2U,
+				.type = PRE_LAUNCHED_VM,
+				.pcpu_bitmap = (PLUG_CPU(1) | PLUG_CPU(3) | PLUG_CPU(5) | PLUG_CPU(7)),
 				.start_hpa = 0x180000000UL,
 				.mem_size = 0x80000000UL, /* uses contiguous memory from host */
 				.vm_vuart = true,
