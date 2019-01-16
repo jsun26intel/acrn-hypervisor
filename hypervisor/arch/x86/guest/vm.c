@@ -389,87 +389,61 @@ uint8_t get_vm_pcpu_nums(struct acrn_vm_config *vm_config)
 	}
 	return cores;
 }
+#endif
 
 /* Create vm/vcpu for vm */
 int32_t prepare_vm(uint16_t pcpu_id)
 {
-	int32_t ret = 0;
+	int32_t err = 0;
 	uint16_t i;
 	struct acrn_vm *vm = NULL;
 	struct acrn_vm_config *vm_config = NULL;
 	bool is_vm_bsp;
-	uint64_t pcpu_bitmap;
 
+#ifdef CONFIG_PARTITION_MODE
 	vm_config = find_pre_launched_vm_config(pcpu_id);
 	is_vm_bsp = (vm_config != NULL) && (get_vm_bsp_pcpu_id(vm_config) == pcpu_id);
-
-	if (is_vm_bsp) {
-		ret = create_vm(vm_config, &vm);
-		ASSERT(ret == 0, "VM creation failed!");
-
-		mptable_build(vm);
-
-		pcpu_bitmap = vm_config->pcpu_bitmap;
-		for (i = 0U; i < get_pcpu_nums(); i++) {
-			if (bitmap_test(i, &pcpu_bitmap)) {
-				prepare_vcpu(vm, i);
-			}
-		}
-
-		if (vm_sw_loader == NULL) {
-			vm_sw_loader = general_sw_loader;
-		}
-
-		(void )vm_sw_loader(vm);
-
-		/* start vm BSP automatically */
-		start_vm(vm);
-
-		pr_acrnlog("Start VM%x", vm->vm_id);
-	}
-
-	return ret;
-}
-
 #else
-
-/* Create vm/vcpu for vm0 */
-int32_t prepare_vm(uint16_t pcpu_id)
-{
-	int32_t err;
-	uint16_t i;
-	struct acrn_vm *vm = NULL;
-	struct acrn_vm_config *vm_config;
-
-	(void)pcpu_id;
 	vm_config = &vm_configs[0];
-
-	err = create_vm(vm_config, &vm);
-
-	if (err == 0) {
-		/* Allocate all cpus to vm0 at the beginning */
-		for (i = 0U; i < get_pcpu_nums(); i++) {
-			err = prepare_vcpu(vm, i);
-			if (err != 0) {
-				break;
-			}
-		}
-
+	is_vm_bsp = (pcpu_id == BOOT_CPU_ID);
+#endif
+	if (is_vm_bsp) {
+		err = create_vm(vm_config, &vm);
 		if (err == 0) {
+#ifdef CONFIG_PARTITION_MODE
+			uint64_t pcpu_bitmap = vm_config->pcpu_bitmap;
 
-			if (vm_sw_loader == NULL) {
-				vm_sw_loader = general_sw_loader;
+			mptable_build(vm);
+			for (i = 0U; i < get_pcpu_nums(); i++) {
+				if (bitmap_test(i, &pcpu_bitmap)) {
+					err = prepare_vcpu(vm, i);
+					if (err != 0) {
+						break;
+					}
+				}
 			}
+#else
+			/* Allocate all cpus to vm0 at the beginning */
+			for (i = 0U; i < get_pcpu_nums(); i++) {
+				err = prepare_vcpu(vm, i);
+				if (err != 0) {
+					break;
+				}
+			}
+#endif
+			if (err == 0) {
+				if (vm_sw_loader == NULL) {
+					vm_sw_loader = general_sw_loader;
+				}
 
-			(void)vm_sw_loader(vm);
+				(void )vm_sw_loader(vm);
 
-			/* start vm0 BSP automatically */
-			start_vm(vm);
+				/* start vm BSP automatically */
+				start_vm(vm);
 
-			pr_acrnlog("Start VM0");
+				pr_acrnlog("Start VM%x", vm->vm_id);
+			}
 		}
 	}
-
 	return err;
 }
-#endif
