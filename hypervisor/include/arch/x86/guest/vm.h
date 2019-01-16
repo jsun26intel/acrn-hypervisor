@@ -306,16 +306,6 @@ struct acrn_vm *get_sos_vm(void);
 uint8_t get_vm_pcpu_nums(struct acrn_vm_config *vm_config);
 
 #ifdef CONFIG_PARTITION_MODE
-struct vm_config_array {
-	struct acrn_vm_config   vm_config_array[CONFIG_MAX_VM_NUM];
-};
-
-struct pcpu_vm_config_mapping {
-	struct acrn_vm_config *vm_config_ptr;
-	bool is_bsp;
-};
-extern const struct pcpu_vm_config_mapping pcpu_vm_config_map[];
-extern struct vm_config_array vm_config_partition;
 struct acrn_vm_config *find_vm_config(uint16_t pcpu_id);
 
 static inline uint16_t get_vm_bsp_pcpu_id(struct acrn_vm_config *vm_config)

@@ -374,7 +374,7 @@ struct acrn_vm_config *find_pre_launched_vm_config(uint16_t pcpu_id)
 	struct acrn_vm_config *vm_config = NULL;
 
 	for (i = 0U; i < CONFIG_MAX_VM_NUM; i++) {
-		vm_config = vm_config_partition.vm_config_array + i;
+		vm_config = vm_configs + i;
 		if ((vm_config->type == PRE_LAUNCHED_VM) && bitmap_test(pcpu_id, &vm_config->pcpu_bitmap)) {
 			break;
 		}
