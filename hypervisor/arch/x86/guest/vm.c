@@ -104,7 +104,7 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 		/* For UOS: This VM software information is configure in DM */
 		if (is_vm0(vm)) {
 			vm->snoopy_mem = false;
-			rebuild_vm0_e820();
+			vm->e820_entry_num = rebuild_sos_vm_e820(vm->e820_entries);
 			prepare_vm0_memmap(vm);
 
 #ifndef CONFIG_EFI_STUB
@@ -119,6 +119,11 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 			}
 
 		} else {
+#ifdef CONFIG_PARTITION_MODE
+			if (vm->vm_config->type == PRE_LAUNCHED_VM) {
+				vm->e820_entry_num = rebuild_prelaunched_vm_e820(vm->e820_entries);
+			}
+#endif
 			/* populate UOS vm fields according to vm_config */
 			if ((vm_config->guest_flags & SECURE_WORLD_ENABLED) != 0U) {
 				vm->sworld_control.flag.supported = 1U;

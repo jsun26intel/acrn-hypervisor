@@ -63,7 +63,7 @@ static uint64_t create_zero_page(struct acrn_vm *vm)
 	zeropage->hdr.load_flags |= (1U << 5U);	/* quiet */
 
 	/* Create/add e820 table entries in zeropage */
-	zeropage->e820_nentries = (uint8_t)create_e820_table(zeropage->entries);
+	zeropage->e820_nentries = (uint8_t)create_e820_table(zeropage->entries, vm->e820_entries, vm->e820_entry_num);
 	clac();
 
 	/* Return Physical Base Address of zeropage */

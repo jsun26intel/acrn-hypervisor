@@ -132,6 +132,8 @@ struct acrn_vm {
 	struct vm_hw_info hw;	/* Reference to this VM's HW information */
 	struct vm_sw_info sw;	/* Reference to SW associated with this VM */
 	struct vm_pm_info pm;	/* Reference to this VM's arch information */
+	uint8_t e820_entry_num;
+	struct e820_entry e820_entries[E820_MAX_ENTRIES];
 	uint16_t vm_id;		    /* Virtual machine identifier */
 	enum vm_state state;	/* VM state */
 	struct acrn_vuart vuart;		/* Virtual UART */

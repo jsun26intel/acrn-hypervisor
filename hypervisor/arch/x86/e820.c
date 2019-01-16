@@ -14,7 +14,7 @@
  * and hide HV memory from VM0...
  */
 
-static uint32_t e820_entries_count;
+static uint8_t e820_entries_count;
 static struct e820_entry e820[E820_MAX_ENTRIES];
 static struct e820_mem_params e820_mem;
 
@@ -51,8 +51,8 @@ static void obtain_e820_mem_info(void)
 	}
 }
 
-/* before boot vm0(service OS), call it to hide the HV RAM entry in e820 table from vm0 */
-void rebuild_vm0_e820(void)
+/* before boot SOS VM, call it to hide the HV RAM entry in e820 table from SOS VM */
+uint8_t rebuild_sos_vm_e820(struct e820_entry *sos_e820)
 {
 	uint32_t i;
 	uint64_t entry_start;
@@ -114,7 +114,28 @@ void rebuild_vm0_e820(void)
 	}
 
 	e820_mem.total_mem_size -= CONFIG_HV_RAM_SIZE;
+
+	(void)memcpy_s((void *)sos_e820, e820_entries_count * sizeof(struct e820_entry),
+			(void *)e820,  e820_entries_count * sizeof(struct e820_entry));
+
+	return e820_entries_count;
 }
+
+#ifdef CONFIG_PARTITION_MODE
+uint8_t rebuild_prelaunched_vm_e820(struct e820_entry *vm_e820)
+{
+	uint8_t i;
+
+	for (i = 0U; i < NUM_E820_ENTRIES; i++) {
+		vm_e820[i].baseaddr = ve820_entry[i].baseaddr;
+		vm_e820[i].length = ve820_entry[i].length;
+		vm_e820[i].type = ve820_entry[i].type;
+	}
+
+	return NUM_E820_ENTRIES;
+
+}
+#endif
 
 /* get some RAM below 1MB in e820 entries, hide it from vm0, return its start address */
 uint64_t e820_alloc_low_memory(uint32_t size_arg)
@@ -226,32 +247,16 @@ const struct e820_mem_params *get_e820_mem_info(void)
 	return &e820_mem;
 }
 
-#ifdef CONFIG_PARTITION_MODE
-uint32_t create_e820_table(struct e820_entry *param_e820)
+uint32_t create_e820_table(struct e820_entry *zp_e820, struct e820_entry *vm_e820, uint8_t entry_num)
 {
 	uint32_t i;
 
-	for (i = 0U; i < NUM_E820_ENTRIES; i++) {
-		param_e820[i].baseaddr = e820_default_entries[i].baseaddr;
-		param_e820[i].length = e820_default_entries[i].length;
-		param_e820[i].type = e820_default_entries[i].type;
+	ASSERT((entry_num > 0U) && (entry_num <= E820_MAX_ENTRIES), "e820 init error");
+	for (i = 0U; i < entry_num; i++) {
+		zp_e820[i].baseaddr = vm_e820[i].baseaddr;
+		zp_e820[i].length = vm_e820[i].length;
+		zp_e820[i].type = vm_e820[i].type;
 	}
 
-	return NUM_E820_ENTRIES;
+	return entry_num;
 }
-#else
-uint32_t create_e820_table(struct e820_entry *param_e820)
-{
-	uint32_t i;
-
-	ASSERT(e820_entries_count > 0U, "e820 should be inited");
-
-	for (i = 0U; i < e820_entries_count; i++) {
-		param_e820[i].baseaddr = e820[i].baseaddr;
-		param_e820[i].length = e820[i].length;
-		param_e820[i].type = e820[i].type;
-	}
-
-	return e820_entries_count;
-}
-#endif
