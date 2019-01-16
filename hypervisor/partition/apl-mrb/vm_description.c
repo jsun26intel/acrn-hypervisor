@@ -145,6 +145,33 @@ static struct vpci_vdev_array vpci_vdev_array2 = {
 	}
 };
 
+static struct acrn_vm_pci_ptdev_config vm0_pci_ptdevs[2] = {
+	{
+		.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
+		.pbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
+	},
+	{
+		.vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x00U},
+		.pbdf.bits = {.b = 0x00U, .d = 0x12U, .f = 0x00U},
+	},
+};
+
+static struct acrn_vm_pci_ptdev_config vm1_pci_ptdevs[3] = {
+	{
+		.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
+		.pbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
+	},
+	{
+		.vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x00U},
+		.pbdf.bits = {.b = 0x00U, .d = 0x15U, .f = 0x00U},
+	},
+	{
+		.vbdf.bits = {.b = 0x00U, .d = 0x02U, .f = 0x00U},
+		.pbdf.bits = {.b = 0x02U, .d = 0x00U, .f = 0x00U},
+	},
+};
+
+
 /*******************************/
 /* User Defined VM definitions */
 /*******************************/
@@ -160,6 +187,8 @@ struct vm_config_array vm_config_partition = {
 				.os_config.bootargs = "root=/dev/sda3 rw rootwait noxsave maxcpus=2 nohpet console=hvc0 \
 						console=ttyS2 no_timer_check ignore_loglevel log_buf_len=16M \
 						consoleblank=0 tsc=reliable xapic_phys",
+				.pci_ptdev_num = 2,
+				.pci_ptdevs = vm0_pci_ptdevs,
 				.vpci_vdev_array = &vpci_vdev_array1,
 			},
 
@@ -172,6 +201,8 @@ struct vm_config_array vm_config_partition = {
 				.os_config.bootargs = "root=/dev/sda3 rw rootwait noxsave maxcpus=2 nohpet console=hvc0 \
 						console=ttyS2 no_timer_check ignore_loglevel log_buf_len=16M \
 						consoleblank=0 tsc=reliable xapic_phys",
+				.pci_ptdev_num = 3,
+				.pci_ptdevs = vm1_pci_ptdevs,
 				.vpci_vdev_array = &vpci_vdev_array2,
 			},
 		}
