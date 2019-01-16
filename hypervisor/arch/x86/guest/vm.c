@@ -89,6 +89,10 @@ int32_t create_vm(struct acrn_vm_config *vm_config, struct acrn_vm **rtn_vm)
 		 * override vm->vm_config after create_vm() returned;
 		 */
 		vm->vm_config = vm_config;
+		if (vm_config->name[0] == 0) {
+			/* if VM name is not configured, specify with VM ID */
+			snprintf(vm_config->name, 16, "ACRN VM_%d", vm_id);
+		}
 		vm->hw.created_vcpus = 0U;
 		vm->emul_mmio_regions = 0U;
 		vm->snoopy_mem = true;
@@ -446,7 +450,7 @@ int32_t prepare_vm(uint16_t pcpu_id)
 				/* start vm BSP automatically */
 				start_vm(vm);
 
-				pr_acrnlog("Start VM%x", vm->vm_id);
+				pr_acrnlog("Start VM id: %x name: %s", vm->vm_id, vm->vm_config->name);
 			}
 		}
 	}
