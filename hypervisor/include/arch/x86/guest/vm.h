@@ -158,6 +158,7 @@ struct acrn_vm {
 	struct acrn_vm_config	*vm_config;
 #ifdef CONFIG_PARTITION_MODE
 	struct mptable_info mptable;
+	struct pci_vdev pci_ptdevs[CONFIG_MAX_PCI_DEV_NUM];
 	uint8_t vrtc_offset;
 #endif
 
@@ -215,10 +216,6 @@ struct acrn_vm_config {
 	uint16_t pci_ptdev_num;				/* indicate how many PCI PT devices in VM */
 	struct acrn_vm_pci_ptdev_config *pci_ptdevs;	/* point to PCI PT devices BDF list */
 	struct acrn_vm_os_config os_config;		/* OS information the VM */
-
-#ifdef CONFIG_PARTITION_MODE
-	struct vpci_vdev_array  *vpci_vdev_array;
-#endif
 
 } __aligned(8);
 

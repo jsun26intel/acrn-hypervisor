@@ -19,132 +19,6 @@ uint16_t VM1_CPUS[VM1_NUM_CPUS] = {0U, 2U};
 /* Logical CPU IDs assigned with this VM */
 uint16_t VM2_CPUS[VM2_NUM_CPUS] = {3U, 1U};
 
-static struct vpci_vdev_array vpci_vdev_array1 = {
-	.num_pci_vdev = 2,
-
-	.vpci_vdev_list = {
-	 {/*vdev 0: hostbridge */
-	  .vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
-	  .ops = &pci_ops_vdev_hostbridge,
-	  .bar = {},
-	  .pdev = {
-		 .bdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
-		}
-	 },
-
-	 {/*vdev 1: SATA controller*/
-	  .vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x0U},
-	  .ops = &pci_ops_vdev_pt,
-	  .bar = {
-			[0] = {
-			.base = 0UL,
-			.size = 0x2000UL,
-			.type = PCIBAR_MEM32
-			},
-			[1] = {
-			.base = 0UL,
-			.size = 0x1000UL,
-			.type = PCIBAR_MEM32
-			},
-			[5] = {
-			.base = 0UL,
-			.size = 0x1000UL,
-			.type = PCIBAR_MEM32
-			},
-	  },
-	 .pdev = {
-		.bdf.bits = {.b = 0x00U, .d = 0x12U, .f = 0x0U},
-		.bar = {
-			[0] = {
-			.base = 0xb3f10000UL,
-			.size = 0x2000UL,
-			.type = PCIBAR_MEM32
-			},
-			[1] = {
-			.base = 0xb3f53000UL,
-			.size = 0x100UL,
-			.type = PCIBAR_MEM32
-			},
-			[5] = {
-			.base = 0xb3f52000UL,
-			.size = 0x800UL,
-			.type = PCIBAR_MEM32
-			},
-		 }
-		}
-	 },
-	}
-};
-
-static struct vpci_vdev_array vpci_vdev_array2 = {
-	.num_pci_vdev = 3,
-
-	.vpci_vdev_list = {
-	 {/*vdev 0: hostbridge*/
-	  .vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
-	  .ops = &pci_ops_vdev_hostbridge,
-	  .bar = {},
-	  .pdev = {
-			.bdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
-		}
-	 },
-
-	 {/*vdev 1: USB controller*/
-	  .vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x0U},
-	  .ops = &pci_ops_vdev_pt,
-	  .bar = {
-			[0] = {
-			.base = 0UL,
-			.size = 0x10000UL,
-			.type = PCIBAR_MEM32
-		 },
-	  },
-	 .pdev = {
-		.bdf.bits = {.b = 0x00U, .d = 0x15U, .f = 0x0U},
-		.bar = {
-			[0] = {
-			.base = 0xb3f00000UL,
-			.size = 0x10000UL,
-			.type = PCIBAR_MEM64
-			},
-		 }
-		}
-	 },
-
-	 {/*vdev 2: Ethernet*/
-	  .vbdf.bits = {.b = 0x00U, .d = 0x02U, .f = 0x0U},
-	  .ops = &pci_ops_vdev_pt,
-	  .bar = {
-			[0] = {
-			.base = 0UL,
-			.size = 0x80000UL,
-			.type = PCIBAR_MEM32
-			},
-			[3] = {
-			.base = 0UL,
-			.size = 0x4000UL,
-			.type = PCIBAR_MEM32
-			},
-	  },
-	 .pdev = {
-		.bdf.bits = {.b = 0x02U, .d = 0x00U, .f = 0x0U},
-		.bar = {
-			[0] = {
-			.base = 0xb3c00000UL,
-			.size = 0x80000UL,
-			.type = PCIBAR_MEM32
-			},
-			[3] = {
-			.base = 0xb3c80000UL,
-			.size = 0x4000UL,
-			.type = PCIBAR_MEM32
-			 },
-		 }
-		}
-	 },
-	}
-};
-
 static struct acrn_vm_pci_ptdev_config vm0_pci_ptdevs[2] = {
 	{
 		.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
@@ -189,7 +63,6 @@ struct vm_config_array vm_config_partition = {
 						consoleblank=0 tsc=reliable xapic_phys",
 				.pci_ptdev_num = 2,
 				.pci_ptdevs = vm0_pci_ptdevs,
-				.vpci_vdev_array = &vpci_vdev_array1,
 			},
 
 			{
@@ -203,7 +76,6 @@ struct vm_config_array vm_config_partition = {
 						consoleblank=0 tsc=reliable xapic_phys",
 				.pci_ptdev_num = 3,
 				.pci_ptdevs = vm1_pci_ptdevs,
-				.vpci_vdev_array = &vpci_vdev_array2,
 			},
 		}
 };

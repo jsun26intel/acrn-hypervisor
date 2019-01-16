@@ -34,19 +34,18 @@
 
 static struct pci_vdev *partition_mode_find_vdev(struct acrn_vpci *vpci, union pci_bdf vbdf)
 {
-	struct vpci_vdev_array *vdev_array;
-	struct pci_vdev *vdev;
+	struct pci_vdev *vdev = NULL;
 	int32_t i;
 
-	vdev_array = vpci->vm->vm_config->vpci_vdev_array;
-	for (i = 0; i < vdev_array->num_pci_vdev; i++) {
-		vdev = &vdev_array->vpci_vdev_list[i];
+	for (i = 0; i < vpci->vm->vm_config->pci_ptdev_num; i++) {
+		vdev = vpci->vm->pci_ptdevs + i;
 		if (vdev->vbdf.value == vbdf.value) {
-			return vdev;
+			break;
 		}
+		vdev = NULL;
 	}
 
-	return NULL;
+	return vdev;
 }
 
 /* get pdev bar address and load bar size and type to vdev */
@@ -123,21 +122,26 @@ void partition_mode_bar_init(struct pci_vdev *vdev)
 
 static int32_t partition_mode_vpci_init(const struct acrn_vm *vm)
 {
-	struct vpci_vdev_array *vdev_array;
+	struct acrn_vm_pci_ptdev_config *ptdev_configs;
 	const struct acrn_vpci *vpci = &vm->vpci;
 	struct pci_vdev *vdev;
 	int32_t i;
 	uint8_t hdr_type;
 
-	vdev_array = vm->vm_config->vpci_vdev_array;
-
-	for (i = 0; i < vdev_array->num_pci_vdev; i++) {
-		vdev = &vdev_array->vpci_vdev_list[i];
+	for (i = 0; i < vm->vm_config->pci_ptdev_num; i++) {
+		/* init pci_ptdevs[] in acrn_vm struct */
+		vdev = (struct pci_vdev *)vm->pci_ptdevs + i;
+		ptdev_configs = vm->vm_config->pci_ptdevs + i;
 		vdev->vpci = vpci;
+		vdev->vbdf.value = ptdev_configs->vbdf.value;
+		vdev->pdev.bdf.value = ptdev_configs->pbdf.value;
 
 		hdr_type = (uint8_t)pci_pdev_read_cfg(vdev->pdev.bdf, PCIR_HDRTYPE, 1U);
 		if ((hdr_type & PCIM_HDRTYPE) == PCIM_HDRTYPE_NORMAL) {
 			partition_mode_bar_init(vdev);
+			vdev->ops = &pci_ops_vdev_pt;
+		} else if ((hdr_type & PCIM_HDRTYPE) == PCIM_HDRTYPE_BRIDGE) {
+			vdev->ops = &pci_ops_vdev_hostbridge;
 		}
 
 		if ((vdev->ops != NULL) && (vdev->ops->init != NULL)) {
@@ -153,14 +157,11 @@ static int32_t partition_mode_vpci_init(const struct acrn_vm *vm)
 
 static void partition_mode_vpci_deinit(const struct acrn_vm *vm)
 {
-	struct vpci_vdev_array *vdev_array;
 	struct pci_vdev *vdev;
 	int32_t i;
 
-	vdev_array = vm->vm_config->vpci_vdev_array;
-
-	for (i = 0; i < vdev_array->num_pci_vdev; i++) {
-		vdev = &vdev_array->vpci_vdev_list[i];
+	for (i = 0; i < vm->vm_config->pci_ptdev_num; i++) {
+		vdev = (struct pci_vdev *)vm->pci_ptdevs + i;
 		if ((vdev->ops != NULL) && (vdev->ops->deinit != NULL)) {
 			if (vdev->ops->deinit(vdev) != 0) {
 				pr_err("vdev->ops->deinit failed!");
