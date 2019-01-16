@@ -2141,7 +2141,7 @@ static int32_t vlapic_x2apic_access(struct acrn_vcpu *vcpu, uint32_t msr, bool w
 	vlapic = vcpu_vlapic(vcpu);
 	if (is_x2apic_enabled(vlapic)) {
 #ifdef CONFIG_PARTITION_MODE
-		if (vcpu->vm->vm_config->lapic_pt) {
+		if((vcpu->vm->vm_config->guest_flags & LAPIC_PASSTHROUGH) != 0U ) {
 			if (msr == MSR_IA32_EXT_APIC_ICR) {
 				error = vlapic_x2apic_pt_icr_access(vcpu->vm, *val);
 			}
