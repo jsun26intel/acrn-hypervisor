@@ -58,6 +58,12 @@ struct acrn_vm *get_vm_from_vmid(uint16_t vm_id)
 	return ret;
 }
 
+/* return a pointer to the virtual machine structure of SOS VM */
+struct acrn_vm *get_sos_vm(void)
+{
+	return &vm_array[0];
+}
+
 /**
  * @pre vm_config != NULL && rtn_vm != NULL
  */

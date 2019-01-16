@@ -18,7 +18,7 @@ static void fire_vhm_interrupt(void)
 	struct acrn_vm *vm0;
 	struct acrn_vcpu *vcpu;
 
-	vm0 = get_vm_from_vmid(0U);
+	vm0 = get_sos_vm();
 
 	vcpu = vcpu_from_vid(vm0, 0U);
 

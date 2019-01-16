@@ -235,7 +235,7 @@ struct acrn_vm_config {
 
 static inline bool is_vm0(const struct acrn_vm *vm)
 {
-	return (vm->vm_id) == 0U;
+	return (vm->vm_config->type) == SOS_VM;
 }
 
 /*
@@ -314,6 +314,7 @@ int32_t prepare_vm(uint16_t pcpu_id);
 extern struct acrn_vm_config vm_configs[];
 
 struct acrn_vm *get_vm_from_vmid(uint16_t vm_id);
+struct acrn_vm *get_sos_vm(void);
 
 #ifdef CONFIG_PARTITION_MODE
 struct vm_config_array {
