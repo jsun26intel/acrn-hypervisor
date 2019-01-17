@@ -27,7 +27,6 @@ static struct vpci_vdev_array vpci_vdev_array1 = {
 		{/*vdev 0: hostbridge */
 			.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
 			.ops = &pci_ops_vdev_hostbridge,
-			.bar = {},
 			.pdev = {
 				.bdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
 			}
@@ -36,54 +35,17 @@ static struct vpci_vdev_array vpci_vdev_array1 = {
 		{/*vdev 1: Ethernet*/
 			.vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x0U},
 			.ops = &pci_ops_vdev_pt,
-			.bar = {
-				[0] = {
-					.base = 0UL,
-					.size = 0x200000UL,
-					.type = PCIBAR_MEM32,
-				},
-				[4] = {
-					.base = 0UL,
-					.size = 0x4000UL,
-					.type = PCIBAR_MEM32,
-				},
-			},
 			.pdev = {
 				.bdf.bits = {.b = 0x03U, .d = 0x00U, .f = 0x1U},
-				.bar = {
-					[0] = {
-						.base = 0x80C00000,
-						.size = 0x200000UL,
-						.type = PCIBAR_MEM32,
-					},
-					[4] = {
-						.base = 0x81000000,
-						.size = 0x4000UL,
-						.type = PCIBAR_MEM32,
-					},
-				}
 			}
 		},
 
 		{/*vdev 2: USB*/
 			.vbdf.bits = {.b = 0x00U, .d = 0x02U, .f = 0x0U},
 			.ops = &pci_ops_vdev_pt,
-			.bar = {
-				[0] = {
-					.base = 0UL,
-					.size = 0x10000UL,
-					.type = PCIBAR_MEM32,
-				}
-			},
+
 			.pdev = {
 				.bdf.bits = {.b = 0x00U, .d = 0x15U, .f = 0x0U},
-				.bar = {
-					[0] = {
-						.base = 0x81340000,
-						.size = 0x10000UL,
-						.type = PCIBAR_MEM32,
-					}
-				}
 			}
 		},
 	}
@@ -96,7 +58,6 @@ static struct vpci_vdev_array vpci_vdev_array2 = {
 		{/*vdev 0: hostbridge*/
 			.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
 			.ops = &pci_ops_vdev_hostbridge,
-			.bar = {},
 			.pdev = {
 				.bdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x0U},
 			}
@@ -105,75 +66,17 @@ static struct vpci_vdev_array vpci_vdev_array2 = {
 		{/*vdev 1: SATA controller*/
 			.vbdf.bits = {.b = 0x00U, .d = 0x05U, .f = 0x0U},
 			.ops = &pci_ops_vdev_pt,
-			.bar = {
-				[0] = {
-					.base = 0UL,
-					.size = 0x2000UL,
-					.type = PCIBAR_MEM32
-				},
-				[1] = {
-					.base = 0UL,
-					.size = 0x1000UL,
-					.type = PCIBAR_MEM32
-				},
-				[5] = {
-					.base = 0UL,
-					.size = 0x1000UL,
-					.type = PCIBAR_MEM32
-				},
-			},
 			.pdev = {
 				.bdf.bits = {.b = 0x00U, .d = 0x14U, .f = 0x0U},
-				.bar = {
-					[0] = {
-						.base = 0x81354000,
-						.size = 0x2000UL,
-						.type = PCIBAR_MEM32
-					},
-					[1] = {
-						.base = 0x8135f000,
-						.size = 0x1000UL,
-						.type = PCIBAR_MEM32
-					},
-					[5] = {
-						.base = 0x8135e000,
-						.size = 0x1000UL,
-						.type = PCIBAR_MEM32
-					},
-				}
 			}
 		},
 
 		{/*vdev 2: Ethernet*/
 			.vbdf.bits = {.b = 0x00U, .d = 0x06U, .f = 0x0U},
 			.ops = &pci_ops_vdev_pt,
-			.bar = {
-				[0] = {
-					.base = 0UL,
-					.size = 0x200000UL,
-					.type = PCIBAR_MEM32,
-				},
-				[4] = {
-					.base = 0UL,
-					.size = 0x4000UL,
-					.type = PCIBAR_MEM32,
-				},
-			},
 
 			.pdev = {
 				.bdf.bits = {.b = 0x03U, .d = 0x00U, .f = 0x0U},
-				.bar = {
-					[0] = {
-						.base = 0x80e00000,
-						.size = 0x200000UL,
-						.type = PCIBAR_MEM32,
-					},
-					[4] = {
-						.base = 0x81004000,
-						.size = 0x4000UL,
-						.type = PCIBAR_MEM32,
-					}
-				}
 			}
 
 		},
