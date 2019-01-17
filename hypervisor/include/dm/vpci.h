@@ -149,5 +149,6 @@ void vpci_init(struct acrn_vm *vm);
 void vpci_cleanup(const struct acrn_vm *vm);
 void vpci_set_ptdev_intr_info(const struct acrn_vm *target_vm, uint16_t vbdf, uint16_t pbdf);
 void vpci_reset_ptdev_intr_info(const struct acrn_vm *target_vm, uint16_t vbdf, uint16_t pbdf);
+void vpci_cfgbar_decode(struct pci_vdev *vdev, uint32_t idx);
 
 #endif /* VPCI_H_ */

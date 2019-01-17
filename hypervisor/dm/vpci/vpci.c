@@ -98,6 +98,55 @@ static void pci_cfgdata_io_write(struct acrn_vm *vm, uint16_t addr, size_t bytes
 	}
 }
 
+void vpci_cfgbar_decode(struct pci_vdev *vdev, uint32_t idx)
+{
+	union pci_bdf pbdf = vdev->pdev.bdf;
+	uint64_t base, size;
+	uint32_t bar_lo, bar_hi, val32;
+	enum pci_bar_type type = PCIBAR_NONE;
+
+	bar_lo = pci_pdev_read_cfg(pbdf, pci_bar_offset(idx), 4U);
+	if ((bar_lo & PCIM_BAR_SPACE) == PCIM_BAR_IO_SPACE) {
+		type = PCIBAR_IO_SPACE;
+	} else if ((bar_lo & PCIM_BAR_MEM_TYPE) == PCIM_BAR_MEM_64) {
+		type = PCIBAR_MEM64;
+	} else if ((bar_lo & PCIM_BAR_MEM_TYPE) == PCIM_BAR_MEM_32) {
+		type = PCIBAR_MEM32;
+	}
+	if ((type != PCIBAR_NONE) && (type != PCIBAR_IO_SPACE)) {
+		/* Get the base address */
+		base = (uint64_t)bar_lo & PCIM_BAR_MEM_BASE;
+		if (type == PCIBAR_MEM64) {
+			bar_hi = pci_pdev_read_cfg(pbdf, pci_bar_offset(idx + 1U), 4U);
+			base |= ((uint64_t)bar_hi << 32U);
+		}
+
+		/* Sizing the BAR */
+		size = 0U;
+		if ((type == PCIBAR_MEM64) && (idx < (PCI_BAR_COUNT - 1U))) {
+			pci_pdev_write_cfg(pbdf, pci_bar_offset(idx + 1U), 4U, ~0U);
+			size = (uint64_t)pci_pdev_read_cfg(pbdf, pci_bar_offset(idx + 1U), 4U);
+			size <<= 32U;
+		}
+
+		pci_pdev_write_cfg(pbdf, pci_bar_offset(idx), 4U, ~0U);
+		val32 = pci_pdev_read_cfg(pbdf, pci_bar_offset(idx), 4U);
+		size |= ((uint64_t)val32 & PCIM_BAR_MEM_BASE);
+		size = size & ~(size - 1U);
+
+		/* Restore the BAR */
+		pci_pdev_write_cfg(pbdf, pci_bar_offset(idx), 4U, bar_lo);
+
+		if (type == PCIBAR_MEM64) {
+			pci_pdev_write_cfg(pbdf, pci_bar_offset(idx + 1U), 4U, bar_hi);
+		}
+
+		vdev->pdev.bar[idx].base = base;
+		vdev->pdev.bar[idx].size = size;
+		vdev->pdev.bar[idx].type = type;
+	}
+}
+
 void vpci_init(struct acrn_vm *vm)
 {
 	struct acrn_vpci *vpci = &vm->vpci;

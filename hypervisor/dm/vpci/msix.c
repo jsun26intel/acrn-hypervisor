@@ -314,45 +314,24 @@ static int32_t vmsix_table_mmio_access_handler(struct io_request *io_req, void *
 static void decode_msix_table_bar(struct pci_vdev *vdev)
 {
 	uint32_t bir = vdev->msix.table_bar;
-	union pci_bdf pbdf = vdev->pdev.bdf;
 	uint64_t base, size;
-	uint32_t bar_lo, bar_hi, val32;
+	enum pci_bar_type type;
 
-	bar_lo = pci_pdev_read_cfg(pbdf, pci_bar_offset(bir), 4U);
-	if ((bar_lo & PCIM_BAR_SPACE) != PCIM_BAR_IO_SPACE) {
-		/* Get the base address */
-		base = (uint64_t)bar_lo & PCIM_BAR_MEM_BASE;
-		if ((bar_lo & PCIM_BAR_MEM_TYPE) == PCIM_BAR_MEM_64) {
-			bar_hi = pci_pdev_read_cfg(pbdf, pci_bar_offset(bir + 1U), 4U);
-			base |= ((uint64_t)bar_hi << 32U);
-		}
+	vpci_cfgbar_decode(vdev, bir);
 
+	type = vdev->pdev.bar[bir].type;
+
+	if ((type == PCIBAR_MEM32) || (type == PCIBAR_MEM32)) {
+		base = vdev->pdev.bar[bir].base;
+		size = vdev->pdev.bar[bir].size;
 		vdev->msix.mmio_hva = (uint64_t)hpa2hva(base);
 		vdev->msix.mmio_gpa = vm0_hpa2gpa(base);
-
-		/* Sizing the BAR */
-		size = 0U;
-		if (((bar_lo & PCIM_BAR_MEM_TYPE) == PCIM_BAR_MEM_64) && (bir < (PCI_BAR_COUNT - 1U))) {
-			pci_pdev_write_cfg(pbdf, pci_bar_offset(bir + 1U), 4U, ~0U);
-			size = (uint64_t)pci_pdev_read_cfg(pbdf, pci_bar_offset(bir + 1U), 4U);
-			size <<= 32U;
-		}
-
-		pci_pdev_write_cfg(pbdf, pci_bar_offset(bir), 4U, ~0U);
-		val32 = pci_pdev_read_cfg(pbdf, pci_bar_offset(bir), 4U);
-		size |= ((uint64_t)val32 & PCIM_BAR_MEM_BASE);
-
-		vdev->msix.mmio_size = size & ~(size - 1U);
-
-		/* Restore the BAR */
-		pci_pdev_write_cfg(pbdf, pci_bar_offset(bir), 4U, bar_lo);
-
-		if ((bar_lo & PCIM_BAR_MEM_TYPE) == PCIM_BAR_MEM_64) {
-			pci_pdev_write_cfg(pbdf, pci_bar_offset(bir + 1U), 4U, bar_hi);
-		}
-	} else {
+		vdev->msix.mmio_size = size;
+	} else if (type == PCIBAR_IO_SPACE) {
 		/* I/O bar, should never happen */
 		pr_err("PCI device (%x) has MSI-X Table at IO BAR", vdev->vbdf.value);
+	} else {
+		pr_err("PCI device (%x) has no MSI-X Table", vdev->vbdf.value);
 	}
 }
 

@@ -134,6 +134,7 @@ union pci_bdf {
 
 enum pci_bar_type {
 	PCIBAR_NONE = 0,
+	PCIBAR_IO_SPACE,
 	PCIBAR_MEM32,
 	PCIBAR_MEM64,
 };
