@@ -108,9 +108,12 @@ static int32_t partition_mode_vpci_init(const struct acrn_vm *vm)
 
 		if (vdev->vbdf.value != 0U) {
 			partition_mode_bar_init(vdev);
+			vdev->ops = &pci_ops_vdev_pt;
+		} else {
+			vdev->ops = &pci_ops_vdev_hostbridge;
 		}
 
-		if ((vdev->ops != NULL) && (vdev->ops->init != NULL)) {
+		if (vdev->ops->init != NULL) {
 			if (vdev->ops->init(vdev) != 0) {
 				pr_err("%s() failed at PCI device (bdf %x)!", __func__,
 					vdev->vbdf);
