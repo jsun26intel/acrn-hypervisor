@@ -11,10 +11,6 @@ int32_t validate_pstate(const struct acrn_vm *vm, uint64_t perf_ctl)
 	const struct cpu_px_data *px_data;
 	uint8_t i, px_cnt;
 
-	if (is_vm0(vm)) {
-		return 0;
-	}
-
 	px_cnt = vm->pm.px_cnt;
 	px_data = vm->pm.px_data;
 
@@ -23,7 +19,7 @@ int32_t validate_pstate(const struct acrn_vm *vm, uint64_t perf_ctl)
 	}
 
 	for (i = 0U; i < px_cnt; i++) {
-		if ((px_data + i)->control == (perf_ctl & 0xffffUL)) {
+		if ((px_data + i)->control == (perf_ctl & 0xff00UL)) {
 			return 0;
 		}
 	}
